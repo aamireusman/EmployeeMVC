@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Employees Dashboard</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
+    <link rel="stylesheet" th:href="@{/css/dashboard.css}"/>
+</head>
+<body class="bg-light">
+
+<div class="container py-5">
+
+    <!-- Header -->
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <h1 class="fw-bold mb-0">Employees Dashboard</h1>
+        <div class="d-flex align-items-center gap-2">
+            <label class="fw-semibold mb-0" for="viewSelect">View as</label>
+            <select id="viewSelect" class="form-select w-auto" onchange="switchView(this.value)">
+                <option value="employees">Employees</option>
+                <option value="departments">Departments</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- ── EMPLOYEES SECTION ──────────────────────────────────────── -->
+    <div id="employees-section">
+        <div class="d-flex justify-content-end mb-3">
+            <a th:href="@{/employees/new}" class="btn btn-primary">
+                <i class="bi bi-plus-lg me-1"></i> Add Employee
+            </a>
+        </div>
+        <div class="card shadow-sm">
+            <div class="card-body p-0">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-dark">
+                    <tr>
+                        <th>First Name</th>
+                        <th>Last Name</th>
+                        <th>Email</th>
+                        <th>Department</th>
+                        <th class="text-center">Action</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="emp : ${employees}" th:id="'emp-row-' + ${emp.id}">
+
+                        <!-- ── View mode ── -->
+                        <td class="view-cell" th:text="${emp.firstName}"></td>
+                        <td class="view-cell" th:text="${emp.lastName}"></td>
+                        <td class="view-cell" th:text="${emp.email}"></td>
+                        <td class="view-cell" th:text="${emp.department != null ? emp.department.name : '—'}"></td>
+
+                        <!-- ── Edit mode (hidden by default) ── -->
+                        <td class="edit-cell d-none">
+                            <input class="form-control form-control-sm"
+                                   th:value="${emp.firstName}" name="firstName"/>
+                        </td>
+                        <td class="edit-cell d-none">
+                            <input class="form-control form-control-sm"
+                                   th:value="${emp.lastName}" name="lastName"/>
+                        </td>
+                        <td class="edit-cell d-none">
+                            <input class="form-control form-control-sm"
+                                   th:value="${emp.email}" name="email" type="email"/>
+                        </td>
+                        <td class="edit-cell d-none">
+                            <select class="form-select form-select-sm" name="departmentId">
+                                <option th:each="dept : ${departments}"
+                                        th:value="${dept.id}"
+                                        th:text="${dept.name}"
+                                        th:selected="${emp.department != null && emp.department.id == dept.id}">
+                                </option>
+                            </select>
+                        </td>
+
+                        <!-- ── Action column ── -->
+                        <td class="text-center">
+                            <!-- View mode buttons -->
+                            <div class="view-actions d-flex justify-content-center gap-2">
+                                <button class="btn btn-sm btn-outline-primary"
+                                        th:onclick="'enableEditEmployee(' + ${emp.id} + ')'">
+                                    <i class="bi bi-pencil"></i> Edit
+                                </button>
+                                <form th:action="@{/employees/delete/{id}(id=${emp.id})}"
+                                      method="post" class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger"
+                                            onclick="return confirm('Delete this employee?')">
+                                        <i class="bi bi-trash"></i> Delete
+                                    </button>
+                                </form>
+                            </div>
+                            <!-- Edit mode buttons (hidden by default) -->
+                            <div class="edit-actions d-none d-flex justify-content-center gap-2">
+                                <form th:action="@{/employees/save}" method="post"
+                                      th:id="'emp-form-' + ${emp.id}" class="d-inline">
+                                    <input type="hidden" th:value="${emp.id}" name="id"/>
+                                    <button type="submit" class="btn btn-sm btn-success">
+                                        <i class="bi bi-check-lg"></i> Save
+                                    </button>
+                                </form>
+                                <button class="btn btn-sm btn-secondary"
+                                        th:onclick="'cancelEditEmployee(' + ${emp.id} + ')'">
+                                    <i class="bi bi-x-lg"></i> Cancel
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <tr th:if="${#lists.isEmpty(employees)}">
+                        <td colspan="5" class="text-center text-muted py-4">No employees found.</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── DEPARTMENTS SECTION ────────────────────────────────────── -->
+    <div id="departments-section" class="d-none">
+        <div class="d-flex justify-content-end mb-3">
+            <a th:href="@{/departments/new}" class="btn btn-primary">
+                <i class="bi bi-plus-lg me-1"></i> Add Department
+            </a>
+        </div>
+        <div class="card shadow-sm">
+            <div class="card-body p-0">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-dark">
+                    <tr>
+                        <th>Department Name</th>
+                        <th class="text-center">Action</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="dept : ${departments}" th:id="'dept-row-' + ${dept.id}">
+
+                        <!-- ── View mode ── -->
+                        <td class="view-cell" th:text="${dept.name}"></td>
+
+                        <!-- ── Edit mode ── -->
+                        <td class="edit-cell d-none">
+                            <input class="form-control form-control-sm"
+                                   th:value="${dept.name}" name="name"/>
+                        </td>
+
+                        <!-- ── Action column ── -->
+                        <td class="text-center">
+                            <div class="view-actions d-flex justify-content-center gap-2">
+                                <button class="btn btn-sm btn-outline-primary"
+                                        th:onclick="'enableEditDept(' + ${dept.id} + ')'">
+                                    <i class="bi bi-pencil"></i> Edit
+                                </button>
+                                <form th:action="@{/departments/delete/{id}(id=${dept.id})}"
+                                      method="post" class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger"
+                                            onclick="return confirm('Delete this department?')">
+                                        <i class="bi bi-trash"></i> Delete
+                                    </button>
+                                </form>
+                            </div>
+                            <div class="edit-actions d-none d-flex justify-content-center gap-2">
+                                <form th:action="@{/departments/save}" method="post"
+                                      th:id="'dept-form-' + ${dept.id}" class="d-inline">
+                                    <input type="hidden" th:value="${dept.id}" name="id"/>
+                                    <button type="submit" class="btn btn-sm btn-success">
+                                        <i class="bi bi-check-lg"></i> Save
+                                    </button>
+                                </form>
+                                <button class="btn btn-sm btn-secondary"
+                                        th:onclick="'cancelEditDept(' + ${dept.id} + ')'">
+                                    <i class="bi bi-x-lg"></i> Cancel
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <tr th:if="${#lists.isEmpty(departments)}">
+                        <td colspan="2" class="text-center text-muted py-4">No departments found.</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div><!-- /container -->
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    /* ── View switcher ─────────────────────────────────────────────── */
+    function switchView(value) {
+        document.getElementById('employees-section').classList.toggle('d-none', value !== 'employees');
+        document.getElementById('departments-section').classList.toggle('d-none', value !== 'departments');
+    }
+
+    // Restore from URL param after redirect
+    const params = new URLSearchParams(window.location.search);
+    const view = params.get('view') || 'employees';
+    document.getElementById('viewSelect').value = view;
+    switchView(view);
+
+    /* ── Employee inline edit ──────────────────────────────────────── */
+    function enableEditEmployee(id) {
+        const row = document.getElementById('emp-row-' + id);
+        row.querySelectorAll('.view-cell').forEach(el => el.classList.add('d-none'));
+        row.querySelectorAll('.edit-cell').forEach(el => el.classList.remove('d-none'));
+        row.querySelector('.view-actions').classList.add('d-none');
+        row.querySelector('.edit-actions').classList.remove('d-none');
+
+        // Wire input values into the save form on submit
+        const form = document.getElementById('emp-form-' + id);
+        form.addEventListener('submit', function () {
+            row.querySelectorAll('.edit-cell input, .edit-cell select').forEach(input => {
+                const hidden = document.createElement('input');
+                hidden.type  = 'hidden';
+                hidden.name  = input.name;
+                hidden.value = input.value;
+                form.appendChild(hidden);
+            });
+        });
+    }
+
+    function cancelEditEmployee(id) {
+        const row = document.getElementById('emp-row-' + id);
+        row.querySelectorAll('.view-cell').forEach(el => el.classList.remove('d-none'));
+        row.querySelectorAll('.edit-cell').forEach(el => el.classList.add('d-none'));
+        row.querySelector('.view-actions').classList.remove('d-none');
+        row.querySelector('.edit-actions').classList.add('d-none');
+    }
+
+    /* ── Department inline edit ────────────────────────────────────── */
+    function enableEditDept(id) {
+        const row = document.getElementById('dept-row-' + id);
+        row.querySelectorAll('.view-cell').forEach(el => el.classList.add('d-none'));
+        row.querySelectorAll('.edit-cell').forEach(el => el.classList.remove('d-none'));
+        row.querySelector('.view-actions').classList.add('d-none');
+        row.querySelector('.edit-actions').classList.remove('d-none');
+
+        const form = document.getElementById('dept-form-' + id);
+        form.addEventListener('submit', function () {
+            row.querySelectorAll('.edit-cell input').forEach(input => {
+                const hidden = document.createElement('input');
+                hidden.type  = 'hidden';
+                hidden.name  = input.name;
+                hidden.value = input.value;
+                form.appendChild(hidden);
+            });
+        });
+    }
+
+    function cancelEditDept(id) {
+        const row = document.getElementById('dept-row-' + id);
+        row.querySelectorAll('.view-cell').forEach(el => el.classList.remove('d-none'));
+        row.querySelectorAll('.edit-cell').forEach(el => el.classList.add('d-none'));
+        row.querySelector('.view-actions').classList.remove('d-none');
+        row.querySelector('.edit-actions').classList.add('d-none');
+    }
+</script>
+</body>
+</html>

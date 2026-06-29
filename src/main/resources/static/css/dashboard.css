@@ -1,0 +1,15 @@
+/* Smooth toggle between view/edit cells */
+.edit-cell input,
+.edit-cell select {
+    min-width: 120px;
+}
+
+thead th {
+    letter-spacing: 0.03em;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+}
+
+.table > tbody > tr > td {
+    vertical-align: middle;
+}
